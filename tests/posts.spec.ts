@@ -25,6 +25,24 @@ test.describe('Posts API', () => {
     expect(response.status()).toBe(404);
   });
 
+  test('returns 404 for a non-numeric id', async ({ postsClient }) => {
+    const response = await postsClient.getById('abc');
+
+    expect(response.status()).toBe(404);
+  });
+
+  test('returns 404 for id zero', async ({ postsClient }) => {
+    const response = await postsClient.getById(0);
+
+    expect(response.status()).toBe(404);
+  });
+
+  test('returns 404 for a negative id', async ({ postsClient }) => {
+    const response = await postsClient.getById(-1);
+
+    expect(response.status()).toBe(404);
+  });
+
   test('lists posts filtered by userId', async ({ postsClient }) => {
     const response = await postsClient.list({ userId: 1 });
 
@@ -34,8 +52,27 @@ test.describe('Posts API', () => {
     expect(body[0]).toHaveProperty('userId', 1);
   });
 
+  test('returns an empty array when filtering by a non-existent userId', async ({
+    postsClient,
+  }) => {
+    const response = await postsClient.list({ userId: 999999 });
+
+    expect(response.status()).toBe(200);
+    const body = await response.json();
+    expect(body).toEqual([]);
+  });
+
   test('deletes a post by id', async ({ postsClient }) => {
     const response = await postsClient.deleteById(1);
+
+    expect(response.status()).toBe(200);
+  });
+
+  test('returns 200 (not 404) when deleting a non-existent post', async ({ postsClient }) => {
+    // Pins JSONPlaceholder's actual behavior: unlike GET, DELETE on a
+    // missing id does not 404 — don't assume 404-on-missing generalizes
+    // across verbs without checking.
+    const response = await postsClient.deleteById(999999);
 
     expect(response.status()).toBe(200);
   });
@@ -46,6 +83,15 @@ test.describe('Posts API', () => {
     expect(response.status()).toBe(200);
     const body = await response.json();
     expect(body).toMatchObject({ id: 1, title: 'updated title' });
+  });
+
+  test('returns 200 (not 404) when partially updating a non-existent post', async ({
+    postsClient,
+  }) => {
+    // Same quirk as delete above — PATCH on a missing id also returns 200.
+    const response = await postsClient.update(999999, { title: 'ghost' });
+
+    expect(response.status()).toBe(200);
   });
 
   test('replaces a post', async ({ postsClient }) => {
