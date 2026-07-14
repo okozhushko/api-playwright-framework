@@ -7,6 +7,7 @@ interface ApiFixtures {
 }
 
 export const test = base.extend<ApiFixtures>({
+  // eslint-disable-next-line no-empty-pattern -- Playwright requires the destructuring pattern to detect fixture deps
   apiContext: async ({}, use) => {
     const context = await request.newContext({
       baseURL: process.env.BASE_URL ?? 'https://api.example.com',
