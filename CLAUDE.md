@@ -13,6 +13,7 @@ npm install                                   # install dependencies
 cp .env.example .env                          # configure BASE_URL / API_TOKEN
 
 npm test                                      # run the full suite (headless)
+npm run test:smoke                            # run only @smoke-tagged tests
 npm run test:coverage                         # run the suite under c8, enforce coverage thresholds
 npm run test:report                           # open the last HTML report
 
@@ -61,7 +62,7 @@ tests/
   <resource>.spec.ts   One spec file per resource/domain area.
 ```
 
-`types/` doesn't exist yet — create it only when the first real need arises (a type shared by 2+ files; today `UserAddress`/`UserCompany` live in `src/api/users-client.ts` since they're only used there). Don't scaffold empty directories speculatively. `factories/` (`src/factories/user-factory.ts`) and `builders/` (`src/builders/user-builder.ts`, used once `CreateUserPayload` grew nested `address`/`company` fields) both exist — follow their shape for new ones. When you add a new top-level folder under `src/`, add a matching path alias in `tsconfig.json` (see existing `@api/*`, `@utils/*`, `@fixtures/*`, `@factories/*`, `@builders/*`) rather than using relative `../../` imports.
+`types/` doesn't exist yet — create it only when the first real need arises (a type shared by 2+ files; today `UserAddress`/`UserCompany` live in `src/api/users-client.ts` since they're only used there). Don't scaffold empty directories speculatively. `factories/` (`src/factories/user-factory.ts`), `builders/` (`src/builders/user-builder.ts`, used once `CreateUserPayload` grew nested `address`/`company` fields), and `utils/` (`src/utils/fail-on-flaky-reporter.ts`, a Playwright reporter — the first genuine cross-cutting need) all exist — follow their shape for new ones. When you add a new top-level folder under `src/`, add a matching path alias in `tsconfig.json` (see existing `@api/*`, `@utils/*`, `@fixtures/*`, `@factories/*`, `@builders/*`) rather than using relative `../../` imports.
 
 ## Naming
 
@@ -108,6 +109,8 @@ tests/
 - Use Playwright's `expect` and its web-first/auto-retrying matchers where applicable; don't add manual sleeps or polling.
 - Don't weaken an assertion to make a flaky test pass (e.g., `toBeTruthy()` where `toMatchObject({...})` is the honest check). Fix the root cause of flakiness instead.
 - Group related tests with `test.describe('<Resource> API')`; keep unrelated resources in separate spec files.
+- Tag the happy-path test per resource (the plain `create` and `getById` cases) with `test('...', { tag: '@smoke' }, ...)`, runnable via `npm run test:smoke`. This is available for when the suite grows large enough that running everything on every PR becomes slow — at 11 tests / ~1s, both `tests.yml` and `nightly.yml` still run the full suite; don't split CI by tag until suite runtime is an actual problem, or the split is just overhead with no benefit.
+- `retries: 2` in CI (`playwright.config.ts`) exists to smooth over genuine external-service hiccups, not to paper over flaky tests. `src/utils/fail-on-flaky-reporter.ts` enforces this: any test that fails then passes on retry fails the overall run, with the offending test(s) printed. If you see this fire, fix the test/client, don't just let the retry "handle it."
 
 ## Error Handling & Logging
 

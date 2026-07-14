@@ -2,7 +2,7 @@ import { test, expect } from '@fixtures/api-fixtures';
 import { createValidPost } from '@factories/post-factory';
 
 test.describe('Posts API', () => {
-  test('creates a new post', async ({ postsClient }) => {
+  test('creates a new post', { tag: '@smoke' }, async ({ postsClient }) => {
     const payload = createValidPost();
     const response = await postsClient.create(payload);
 
@@ -11,7 +11,7 @@ test.describe('Posts API', () => {
     expect(body).toMatchObject({ ...payload } as Record<string, unknown>);
   });
 
-  test('fetches a post by id', async ({ postsClient }) => {
+  test('fetches a post by id', { tag: '@smoke' }, async ({ postsClient }) => {
     const response = await postsClient.getById(1);
 
     expect(response.ok()).toBeTruthy();
@@ -38,5 +38,22 @@ test.describe('Posts API', () => {
     const response = await postsClient.deleteById(1);
 
     expect(response.status()).toBe(200);
+  });
+
+  test('partially updates a post', async ({ postsClient }) => {
+    const response = await postsClient.update(1, { title: 'updated title' });
+
+    expect(response.status()).toBe(200);
+    const body = await response.json();
+    expect(body).toMatchObject({ id: 1, title: 'updated title' });
+  });
+
+  test('replaces a post', async ({ postsClient }) => {
+    const payload = createValidPost({ title: 'replaced title' });
+    const response = await postsClient.replace(1, payload);
+
+    expect(response.status()).toBe(200);
+    const body = await response.json();
+    expect(body).toMatchObject({ ...payload } as Record<string, unknown>);
   });
 });

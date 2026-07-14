@@ -3,7 +3,7 @@ import { createValidUser } from '@factories/user-factory';
 import { UserBuilder } from '@builders/user-builder';
 
 test.describe('Users API', () => {
-  test('creates a new user', async ({ usersClient }) => {
+  test('creates a new user', { tag: '@smoke' }, async ({ usersClient }) => {
     const payload = createValidUser();
     const response = await usersClient.create(payload);
 
@@ -36,7 +36,7 @@ test.describe('Users API', () => {
     expect(body).toMatchObject({ ...payload } as Record<string, unknown>);
   });
 
-  test('fetches a user by id', async ({ usersClient }) => {
+  test('fetches a user by id', { tag: '@smoke' }, async ({ usersClient }) => {
     const response = await usersClient.getById(1);
 
     expect(response.ok()).toBeTruthy();
@@ -63,5 +63,22 @@ test.describe('Users API', () => {
     const response = await usersClient.deleteById(1);
 
     expect(response.status()).toBe(200);
+  });
+
+  test('partially updates a user', async ({ usersClient }) => {
+    const response = await usersClient.update(1, { email: 'updated@example.com' });
+
+    expect(response.status()).toBe(200);
+    const body = await response.json();
+    expect(body).toMatchObject({ id: 1, email: 'updated@example.com' });
+  });
+
+  test('replaces a user', async ({ usersClient }) => {
+    const payload = createValidUser({ name: 'Replaced Name' });
+    const response = await usersClient.replace(1, payload);
+
+    expect(response.status()).toBe(200);
+    const body = await response.json();
+    expect(body).toMatchObject({ ...payload } as Record<string, unknown>);
   });
 });
