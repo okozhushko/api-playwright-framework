@@ -1,0 +1,9 @@
+{
+  "include": ["src/**/*.ts"],
+  "reporter": ["text", "lcov"],
+  "check-coverage": true,
+  "lines": 90,
+  "functions": 80,
+  "branches": 85,
+  "statements": 90
+}
