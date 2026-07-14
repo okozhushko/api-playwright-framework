@@ -1,15 +1,14 @@
 import { test, expect } from '@fixtures/api-fixtures';
+import { createValidUser } from '@factories/user-factory';
 
 test.describe('Users API', () => {
   test('creates a new user', async ({ usersClient }) => {
-    const response = await usersClient.create({
-      name: 'Jane Doe',
-      email: 'jane.doe@example.com',
-    });
+    const payload = createValidUser();
+    const response = await usersClient.create(payload);
 
     expect(response.status()).toBe(201);
     const body = await response.json();
-    expect(body).toMatchObject({ name: 'Jane Doe', email: 'jane.doe@example.com' });
+    expect(body).toMatchObject({ ...payload } as Record<string, unknown>);
   });
 
   test('fetches a user by id', async ({ usersClient }) => {

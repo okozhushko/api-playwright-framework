@@ -58,7 +58,7 @@ tests/
   <resource>.spec.ts   One spec file per resource/domain area.
 ```
 
-`builders/`, `factories/`, `types/` don't exist yet — create them only when the first real need arises (a second resource, a payload with 4+ optional fields, a type shared by 2+ files). Don't scaffold empty directories speculatively. When you add a new top-level folder under `src/`, add a matching path alias in `tsconfig.json` (see existing `@api/*`, `@utils/*`, `@fixtures/*`) rather than using relative `../../` imports.
+`builders/`, `types/` don't exist yet — create them only when the first real need arises (a payload with 4+ optional fields, a type shared by 2+ files). Don't scaffold empty directories speculatively. `factories/` exists (`src/factories/user-factory.ts`) — follow its shape for new factories. When you add a new top-level folder under `src/`, add a matching path alias in `tsconfig.json` (see existing `@api/*`, `@utils/*`, `@fixtures/*`, `@factories/*`) rather than using relative `../../` imports.
 
 ## Naming
 
