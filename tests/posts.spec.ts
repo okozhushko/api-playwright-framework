@@ -1,5 +1,6 @@
 import { test, expect } from '@fixtures/api-fixtures';
 import { createValidPost } from '@factories/post-factory';
+import { CreatePostPayload } from '@api/posts-client';
 
 test.describe('Posts API', () => {
   test('creates a new post', { tag: '@smoke' }, async ({ postsClient }) => {
@@ -9,6 +10,29 @@ test.describe('Posts API', () => {
     expect(response.status()).toBe(201);
     const body = await response.json();
     expect(body).toMatchObject({ ...payload } as Record<string, unknown>);
+  });
+
+  test('round-trips unicode and special characters in the payload', async ({ postsClient }) => {
+    const payload = createValidPost({ title: 'Тарас <script>alert(1)</script> 🚀' });
+    const response = await postsClient.create(payload);
+
+    expect(response.status()).toBe(201);
+    const body = await response.json();
+    expect(body.title).toBe(payload.title);
+  });
+
+  test('creates a post from a minimal payload without required-field validation', async ({
+    postsClient,
+  }) => {
+    // Deliberately violates CreatePostPayload's required fields to pin
+    // actual JSONPlaceholder behavior: it does not validate required
+    // fields — an empty payload still succeeds. Document this instead of
+    // assuming a real API would behave the same way.
+    const response = await postsClient.create({} as CreatePostPayload);
+
+    expect(response.status()).toBe(201);
+    const body = await response.json();
+    expect(body).toHaveProperty('id');
   });
 
   test('fetches a post by id', { tag: '@smoke' }, async ({ postsClient }) => {
@@ -101,5 +125,16 @@ test.describe('Posts API', () => {
     expect(response.status()).toBe(200);
     const body = await response.json();
     expect(body).toMatchObject({ ...payload } as Record<string, unknown>);
+  });
+
+  test('returns 500 when replacing a non-existent post', async ({ postsClient }) => {
+    // Unlike PATCH/DELETE (which return 200 on a missing id, see above),
+    // PUT on a missing id hits an unhandled error in JSONPlaceholder's
+    // underlying server — a genuine bug in the mock, not a design choice.
+    // Pinned here so a future fix upstream is a visible, deliberate change.
+    const payload = createValidPost();
+    const response = await postsClient.replace(999999, payload);
+
+    expect(response.status()).toBe(500);
   });
 });

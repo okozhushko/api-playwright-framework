@@ -1,6 +1,7 @@
 import { test, expect } from '@fixtures/api-fixtures';
 import { createValidUser } from '@factories/user-factory';
 import { UserBuilder } from '@builders/user-builder';
+import { CreateUserPayload } from '@api/users-client';
 
 test.describe('Users API', () => {
   test('creates a new user', { tag: '@smoke' }, async ({ usersClient }) => {
@@ -34,6 +35,29 @@ test.describe('Users API', () => {
     expect(response.status()).toBe(201);
     const body = await response.json();
     expect(body).toMatchObject({ ...payload } as Record<string, unknown>);
+  });
+
+  test('round-trips unicode and special characters in the payload', async ({ usersClient }) => {
+    const payload = createValidUser({ name: 'Тарас <script>alert(1)</script> 🚀' });
+    const response = await usersClient.create(payload);
+
+    expect(response.status()).toBe(201);
+    const body = await response.json();
+    expect(body.name).toBe(payload.name);
+  });
+
+  test('creates a user from a minimal payload without required-field validation', async ({
+    usersClient,
+  }) => {
+    // Deliberately violates CreateUserPayload's required fields to pin
+    // actual JSONPlaceholder behavior: it does not validate required
+    // fields — an empty payload still succeeds. Document this instead of
+    // assuming a real API would behave the same way.
+    const response = await usersClient.create({} as CreateUserPayload);
+
+    expect(response.status()).toBe(201);
+    const body = await response.json();
+    expect(body).toHaveProperty('id');
   });
 
   test('fetches a user by id', { tag: '@smoke' }, async ({ usersClient }) => {
@@ -124,5 +148,16 @@ test.describe('Users API', () => {
     expect(response.status()).toBe(200);
     const body = await response.json();
     expect(body).toMatchObject({ ...payload } as Record<string, unknown>);
+  });
+
+  test('returns 500 when replacing a non-existent user', async ({ usersClient }) => {
+    // Unlike PATCH/DELETE (which return 200 on a missing id, see above),
+    // PUT on a missing id hits an unhandled error in JSONPlaceholder's
+    // underlying server — a genuine bug in the mock, not a design choice.
+    // Pinned here so a future fix upstream is a visible, deliberate change.
+    const payload = createValidUser();
+    const response = await usersClient.replace(999999, payload);
+
+    expect(response.status()).toBe(500);
   });
 });
