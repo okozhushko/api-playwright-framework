@@ -13,6 +13,7 @@ npm install                                   # install dependencies
 cp .env.example .env                          # configure BASE_URL / API_TOKEN
 
 npm test                                      # run the full suite (headless)
+npm run test:coverage                         # run the suite under c8, enforce coverage thresholds
 npm run test:report                           # open the last HTML report
 
 npx playwright test tests/users.spec.ts       # run a single spec file
@@ -21,13 +22,15 @@ npx playwright test --list                    # list tests without running them 
 
 npm run lint                                  # eslint
 npm run format                                # prettier --write
+npm run format:check                          # prettier --check (CI uses this, not --write)
 
 npx tsc --noEmit                              # type-check without emitting
+npm audit --audit-level=high                  # fail on known high/critical vulnerabilities
 ```
 
 No separate build step — Playwright Test transpiles TypeScript on the fly.
 
-Before opening a PR, all four must pass locally: `npm run lint`, `npx tsc --noEmit`, `npm test`. CI (`.github/workflows/tests.yml`) enforces the same gate on every push/PR to `main`.
+Before opening a PR, all of these must pass locally: `npm audit --audit-level=high`, `npm run format:check`, `npm run lint`, `npx tsc --noEmit`, `npm run test:coverage`. CI (`.github/workflows/tests.yml`) enforces the same gate, in that order, on every push/PR to `main`; `main` is protected and requires this check plus one approving review before merge. `.github/workflows/nightly.yml` reruns the full suite daily (03:00 UTC) against live `BASE_URL` independent of any code change, to catch drift in the external API itself.
 
 ## Core Principles
 
@@ -36,12 +39,12 @@ Applied concretely, not as slogans:
 - **KISS / YAGNI** — the simplest solution that satisfies the current requirement wins. Do not add configuration, abstraction layers, or extension points for hypothetical future needs.
 - **DRY** — extract shared logic only after it is duplicated a second time (rule of three is too generous here; two call sites with identical logic is enough to extract in a small codebase). Don't pre-emptively extract a helper for something used once.
 - **SOLID**, scoped to this codebase:
-  - *SRP* — a client class owns one resource's HTTP surface; a builder owns one entity's data shape; a fixture owns one piece of test setup/teardown. Don't let a client class grow assertions, a fixture grow business logic, or a builder grow HTTP calls.
-  - *OCP* — add a new resource by adding a new client class, not by branching inside an existing one.
-  - *LSP* — a resource client must be usable anywhere `BaseApiClient` is expected; never override a base method to change its contract (e.g., silently swallowing an error status).
-  - *ISP* — fixtures expose only what a test needs (`usersClient`, not a god-fixture bundling every client and every helper).
-  - *DIP* — clients and builders depend on the `APIRequestContext` abstraction injected via fixtures, never on `process.env` or global state directly.
-- **Composition over inheritance** — the *one* sanctioned inheritance relationship in this codebase is `ResourceClient extends BaseApiClient` (a single, flat level, purely to reuse the HTTP verb wrapper). Never introduce a second level of inheritance, a mixin, or an abstract intermediate class. Everything else — request retries, auth headers, logging, test data variants — is composed via fixtures, injected functions, and Builder/Factory objects, not subclassing.
+  - _SRP_ — a client class owns one resource's HTTP surface; a builder owns one entity's data shape; a fixture owns one piece of test setup/teardown. Don't let a client class grow assertions, a fixture grow business logic, or a builder grow HTTP calls.
+  - _OCP_ — add a new resource by adding a new client class, not by branching inside an existing one.
+  - _LSP_ — a resource client must be usable anywhere `BaseApiClient` is expected; never override a base method to change its contract (e.g., silently swallowing an error status).
+  - _ISP_ — fixtures expose only what a test needs (`usersClient`, not a god-fixture bundling every client and every helper).
+  - _DIP_ — clients and builders depend on the `APIRequestContext` abstraction injected via fixtures, never on `process.env` or global state directly.
+- **Composition over inheritance** — the _one_ sanctioned inheritance relationship in this codebase is `ResourceClient extends BaseApiClient` (a single, flat level, purely to reuse the HTTP verb wrapper). Never introduce a second level of inheritance, a mixin, or an abstract intermediate class. Everything else — request retries, auth headers, logging, test data variants — is composed via fixtures, injected functions, and Builder/Factory objects, not subclassing.
 - **Clean Architecture, lightweight** — keep a one-way dependency flow: `tests/` → `src/fixtures/` → `src/api/` (clients) → `src/builders/` / `src/factories/` / `src/utils/` (leaf-level, no dependents inside `src/`). Nothing under `src/` should import from `tests/`.
 
 ## Project Structure
@@ -76,11 +79,11 @@ tests/
 - Explicit return types on every exported function/method (public surface should never rely on inference).
 - Prefer `readonly` and `const`; treat payload/DTO objects as immutable. Don't mutate function parameters.
 - `async`/`await` only — no raw `.then()` chains.
-- Formatting and lint rules are owned by Prettier/ESLint (`.prettierrc.json`, `.eslintrc.json`); don't hand-format or argue style in review — run `npm run format` / `npm run lint` and accept the output. If a rule genuinely needs an exception (see the fixture's `no-empty-pattern` case), suppress it inline with a comment explaining *why*, never at the file or project level.
+- Formatting and lint rules are owned by Prettier/ESLint (`.prettierrc.json`, `.eslintrc.json`); don't hand-format or argue style in review — run `npm run format` / `npm run lint` and accept the output. If a rule genuinely needs an exception (see the fixture's `no-empty-pattern` case), suppress it inline with a comment explaining _why_, never at the file or project level.
 
 ## API Clients
 
-- `BaseApiClient` (`src/api/base-client.ts`) is the *only* place that talks to `APIRequestContext` directly (`get/post/put/patch/delete`). Resource clients call these inherited verbs — they never reach into `this.request` themselves.
+- `BaseApiClient` (`src/api/base-client.ts`) is the _only_ place that talks to `APIRequestContext` directly (`get/post/put/patch/delete`). Resource clients call these inherited verbs — they never reach into `this.request` themselves.
 - A resource client returns the raw `APIResponse` from Playwright. It does not parse, assert, throw, or interpret status codes — that's the test's job. Clients are a thin, honest transport layer.
 - One class per resource (`UsersClient`, `OrdersClient`, ...), named `<Resource>Client`, holding its own `basePath`.
 - Before adding a new client method, check whether an existing verb method on `BaseApiClient` already covers it — most resource methods are one line calling `this.get/post/...` with a path.
@@ -122,13 +125,16 @@ tests/
 
 ## CI/CD
 
-- `.github/workflows/tests.yml` runs on push/PR to `main`: install (cached) → lint → typecheck → `playwright test` → upload HTML report as an artifact (always, pass or fail).
-- Any new required check (new lint rule, new script) must be added to this workflow in the same PR that introduces the requirement — don't let CI drift behind local expectations.
+- `.github/workflows/tests.yml` runs on push/PR to `main`: install (cached) → `npm audit --audit-level=high` → `format:check` → lint → typecheck → `test:coverage` (tests + enforced coverage thresholds) → upload HTML report as an artifact (always, pass or fail). Any step failing blocks the merge — `main` requires this check to pass (see Git Workflow).
+- `.github/workflows/nightly.yml` runs the same test+coverage step daily via cron, independent of any push, to catch drift in the live external API (JSONPlaceholder) rather than in our code. Also triggerable manually (`workflow_dispatch`).
+- Coverage thresholds live in `.c8rc.json` (currently lines 90 / statements 90 / branches 85 / functions 80, set with headroom below the measured baseline). Raise them opportunistically when coverage genuinely improves; don't lower them to make a change pass — write the missing test instead.
+- Any new required check (new lint rule, new script) must be added to `tests.yml` in the same PR that introduces the requirement — don't let CI drift behind local expectations.
 - Job has `permissions: contents: read`, a `concurrency` group cancelling superseded runs, and a `timeout-minutes` cap — preserve these when editing the workflow.
+- `.github/dependabot.yml` opens weekly, grouped update PRs for `npm` and `github-actions`. A Dependabot PR that fails CI (e.g. a peer-dependency conflict) should be closed, not merged or forced — Dependabot reopens it once the conflict resolves upstream.
 
 ## Git Workflow
 
-- `main` is the trunk. Branch per change; no direct commits to `main` outside solo scaffolding work.
+- `main` is the trunk and is branch-protected: merging requires the `test` status check to pass and one approving review. Branch per change; open a PR even for solo work — direct pushes to `main` are blocked by the ruleset (repo admins can still bypass in a genuine emergency, but that's the exception, not the norm).
 - Commit subjects are imperative, present tense, no type-prefix convention enforced (`Add lint/typecheck gate...`, not `feat: add...`) — match existing history (`git log`).
 - One logical change per commit. Don't bundle an unrelated refactor into a feature/fix commit.
 - A commit must leave the repo in a state where lint, typecheck, and tests all pass — don't commit code you know is broken "to fix in the next commit."
@@ -142,6 +148,7 @@ tests/
 ## Hard Rules
 
 **Always:**
+
 - Reuse `BaseApiClient`'s verb methods instead of touching `APIRequestContext` directly in a resource client.
 - Keep resource clients, fixtures, builders, and tests in their designated folders (see Project Structure).
 - Run `npm run lint`, `npx tsc --noEmit`, and `npm test` before considering a change done.
@@ -149,6 +156,7 @@ tests/
 - Import `test`/`expect` from `@fixtures/api-fixtures` in specs.
 
 **Never:**
+
 - Add a second level of class inheritance or a mixin anywhere in this codebase.
 - Introduce a new abstraction, pattern, or dependency (state management, HTTP library, assertion library) without a concrete, current need — no speculative infrastructure.
 - Put assertions or business logic inside a fixture or an API client.

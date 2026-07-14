@@ -7,6 +7,8 @@ API test automation framework built on [Playwright Test](https://playwright.dev/
 ```
 src/
   api/          API clients (one class per resource, extends BaseApiClient)
+  builders/     Fluent builders for payloads with many optional/nested fields
+  factories/    Plain functions for simple, low-variance payloads
   fixtures/     Playwright test fixtures (apiContext, per-resource clients)
 tests/          Test specs
 ```
@@ -22,6 +24,7 @@ cp .env.example .env   # fill in BASE_URL / API_TOKEN
 
 ```bash
 npm test                # run all tests
+npm run test:coverage   # run all tests under c8, enforcing coverage thresholds
 npm run test:report     # open the last HTML report
 ```
 
@@ -33,4 +36,4 @@ npm run test:report     # open the last HTML report
 
 ## CI
 
-`.github/workflows/tests.yml` runs the suite on every push/PR to `main` and uploads the HTML report as an artifact.
+`.github/workflows/tests.yml` runs on every push/PR to `main`: `npm audit`, format check, lint, typecheck, then the test suite with enforced coverage thresholds, uploading the HTML report as an artifact. `main` requires this check plus one approving review before merge. `.github/workflows/nightly.yml` reruns the suite daily to catch drift in the external API independent of code changes. `.github/dependabot.yml` opens weekly update PRs for npm and GitHub Actions dependencies.
