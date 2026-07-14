@@ -10,7 +10,7 @@ export const test = base.extend<ApiFixtures>({
   // eslint-disable-next-line no-empty-pattern -- Playwright requires the destructuring pattern to detect fixture deps
   apiContext: async ({}, use) => {
     const context = await request.newContext({
-      baseURL: process.env.BASE_URL ?? 'https://api.example.com',
+      baseURL: process.env.BASE_URL ?? 'https://jsonplaceholder.typicode.com',
       extraHTTPHeaders: {
         Authorization: process.env.API_TOKEN ? `Bearer ${process.env.API_TOKEN}` : '',
       },

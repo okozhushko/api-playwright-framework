@@ -13,7 +13,7 @@ export default defineConfig({
   workers: process.env.CI ? 2 : undefined,
   reporter: [['html', { open: 'never' }], ['list']],
   use: {
-    baseURL: process.env.BASE_URL ?? 'https://api.example.com',
+    baseURL: process.env.BASE_URL ?? 'https://jsonplaceholder.typicode.com',
     extraHTTPHeaders: {
       Accept: 'application/json',
     },
