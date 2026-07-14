@@ -3,9 +3,12 @@
   "version": "1.0.0",
   "description": "API test automation framework built on Playwright Test",
   "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "test": "playwright test",
-    "test:headed": "playwright test --headed",
+    "test:smoke": "playwright test --grep @smoke",
     "test:coverage": "c8 playwright test",
     "test:report": "playwright show-report",
     "lint": "eslint . --ext .ts",

@@ -11,7 +11,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 2 : undefined,
-  reporter: [['html', { open: 'never' }], ['list']],
+  reporter: [['html', { open: 'never' }], ['list'], ['./src/utils/fail-on-flaky-reporter.ts']],
   use: {
     baseURL: process.env.BASE_URL ?? 'https://jsonplaceholder.typicode.com',
     extraHTTPHeaders: {
