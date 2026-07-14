@@ -49,4 +49,19 @@ test.describe('Users API', () => {
 
     expect(response.status()).toBe(404);
   });
+
+  test('lists users filtered by id', async ({ usersClient }) => {
+    const response = await usersClient.list({ id: 1 });
+
+    expect(response.status()).toBe(200);
+    const body = await response.json();
+    expect(body).toHaveLength(1);
+    expect(body[0]).toHaveProperty('id', 1);
+  });
+
+  test('deletes a user by id', async ({ usersClient }) => {
+    const response = await usersClient.deleteById(1);
+
+    expect(response.status()).toBe(200);
+  });
 });

@@ -24,4 +24,19 @@ test.describe('Posts API', () => {
 
     expect(response.status()).toBe(404);
   });
+
+  test('lists posts filtered by userId', async ({ postsClient }) => {
+    const response = await postsClient.list({ userId: 1 });
+
+    expect(response.status()).toBe(200);
+    const body = await response.json();
+    expect(body).toHaveLength(10);
+    expect(body[0]).toHaveProperty('userId', 1);
+  });
+
+  test('deletes a post by id', async ({ postsClient }) => {
+    const response = await postsClient.deleteById(1);
+
+    expect(response.status()).toBe(200);
+  });
 });
