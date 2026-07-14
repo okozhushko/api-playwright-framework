@@ -58,7 +58,7 @@ tests/
   <resource>.spec.ts   One spec file per resource/domain area.
 ```
 
-`builders/`, `types/` don't exist yet — create them only when the first real need arises (a payload with 4+ optional fields, a type shared by 2+ files). Don't scaffold empty directories speculatively. `factories/` exists (`src/factories/user-factory.ts`) — follow its shape for new factories. When you add a new top-level folder under `src/`, add a matching path alias in `tsconfig.json` (see existing `@api/*`, `@utils/*`, `@fixtures/*`, `@factories/*`) rather than using relative `../../` imports.
+`types/` doesn't exist yet — create it only when the first real need arises (a type shared by 2+ files; today `UserAddress`/`UserCompany` live in `src/api/users-client.ts` since they're only used there). Don't scaffold empty directories speculatively. `factories/` (`src/factories/user-factory.ts`) and `builders/` (`src/builders/user-builder.ts`, used once `CreateUserPayload` grew nested `address`/`company` fields) both exist — follow their shape for new ones. When you add a new top-level folder under `src/`, add a matching path alias in `tsconfig.json` (see existing `@api/*`, `@utils/*`, `@fixtures/*`, `@factories/*`, `@builders/*`) rather than using relative `../../` imports.
 
 ## Naming
 
