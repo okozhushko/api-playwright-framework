@@ -9,13 +9,12 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "baseUrl": ".",
     "paths": {
-      "@api/*": ["src/api/*"],
-      "@utils/*": ["src/utils/*"],
-      "@fixtures/*": ["src/fixtures/*"],
-      "@factories/*": ["src/factories/*"],
-      "@builders/*": ["src/builders/*"]
+      "@api/*": ["./src/api/*"],
+      "@utils/*": ["./src/utils/*"],
+      "@fixtures/*": ["./src/fixtures/*"],
+      "@factories/*": ["./src/factories/*"],
+      "@builders/*": ["./src/builders/*"]
     }
   },
   "include": ["src", "tests", "playwright.config.ts"]
