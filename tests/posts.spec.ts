@@ -2,6 +2,8 @@ import { test, expect } from '@fixtures/api-fixtures';
 import { createValidPost } from '@factories/post-factory';
 import { CreatePostPayload } from '@api/posts-client';
 
+// NOTE: JSONPlaceholder (the test backend) doesn't persist mutations, so tests using fixed resource IDs
+// (e.g., id=1) are safe to run in parallel. Each worker gets an independent, stateless mock response.
 test.describe('Posts API', () => {
   test('creates a new post', { tag: '@smoke' }, async ({ postsClient }) => {
     const payload = createValidPost();

@@ -3,6 +3,8 @@ import { createValidUser } from '@factories/user-factory';
 import { UserBuilder } from '@builders/user-builder';
 import { CreateUserPayload } from '@api/users-client';
 
+// NOTE: JSONPlaceholder (the test backend) doesn't persist mutations, so tests using fixed resource IDs
+// (e.g., id=1) are safe to run in parallel. Each worker gets an independent, stateless mock response.
 test.describe('Users API', () => {
   test('creates a new user', { tag: '@smoke' }, async ({ usersClient }) => {
     const payload = createValidUser();

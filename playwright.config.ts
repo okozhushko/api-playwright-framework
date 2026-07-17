@@ -13,10 +13,6 @@ export default defineConfig({
   workers: process.env.CI ? 2 : undefined,
   reporter: [['html', { open: 'never' }], ['list'], ['./src/utils/fail-on-flaky-reporter.ts']],
   use: {
-    baseURL: process.env.BASE_URL ?? 'https://jsonplaceholder.typicode.com',
-    extraHTTPHeaders: {
-      Accept: 'application/json',
-    },
     trace: 'retain-on-failure',
   },
 });

@@ -1,3 +1,4 @@
+/* eslint-disable no-console -- Reporter writes to stderr by design, not app-level logging */
 import type { FullResult, Reporter, TestCase, TestResult } from '@playwright/test/reporter';
 
 interface RerunPass {

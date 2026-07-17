@@ -1,6 +1,7 @@
 import { test as base, request, APIRequestContext } from '@playwright/test';
 import { UsersClient } from '@api/users-client';
 import { PostsClient } from '@api/posts-client';
+import { getBaseUrl } from '@utils/env';
 
 interface ApiFixtures {
   apiContext: APIRequestContext;
@@ -12,7 +13,7 @@ export const test = base.extend<ApiFixtures>({
   // eslint-disable-next-line no-empty-pattern -- Playwright requires the destructuring pattern to detect fixture deps
   apiContext: async ({}, use) => {
     const context = await request.newContext({
-      baseURL: process.env.BASE_URL ?? 'https://jsonplaceholder.typicode.com',
+      baseURL: getBaseUrl(),
       extraHTTPHeaders: {
         Authorization: process.env.API_TOKEN ? `Bearer ${process.env.API_TOKEN}` : '',
       },

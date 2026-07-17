@@ -116,8 +116,8 @@ tests/
 
 - Don't wrap client calls in `try/catch` to "handle" HTTP errors — a 4xx/5xx is a normal `APIResponse`, not a thrown exception. Let the test's assertions decide pass/fail.
 - Never add a `catch` block that only logs and swallows — if you catch, either recover meaningfully or rethrow.
-- No `console.log` for control flow or debugging left in committed code. Playwright's trace/HTML report (already configured: `trace: 'retain-on-failure'`) is the primary debugging tool — use `show-trace` / `test:report` instead of print-driven debugging.
-- If genuine runtime logging becomes necessary (not yet the case in this codebase), centralize it in `src/utils/logger.ts` as a single wrapper — don't scatter `console.*` calls.
+- No `console.log` for control flow or debugging left in committed code. Playwright's trace/HTML report (already configured: `trace: 'retain-on-failure'`) is the primary debugging tool — use `show-trace` / `test:report` instead of print-driven debugging. Exception: `src/utils/fail-on-flaky-reporter.ts` uses `console.error` by design — Playwright `Reporter`s output to stderr as their normal contract, not app-level logging.
+- If genuine runtime logging becomes necessary, centralize it in `src/utils/logger.ts` as a single wrapper — don't scatter `console.*` calls.
 
 ## Config & Environment
 
