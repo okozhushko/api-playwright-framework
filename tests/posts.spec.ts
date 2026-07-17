@@ -40,7 +40,7 @@ test.describe('Posts API', () => {
   test('fetches a post by id', { tag: '@smoke' }, async ({ postsClient }) => {
     const response = await postsClient.getById(1);
 
-    expect(response.ok()).toBeTruthy();
+    expect(response.status()).toBe(200);
     const body = await response.json();
     expect(body).toHaveProperty('id', 1);
   });
@@ -74,8 +74,10 @@ test.describe('Posts API', () => {
 
     expect(response.status()).toBe(200);
     const body = await response.json();
-    expect(body).toHaveLength(10);
-    expect(body[0]).toHaveProperty('userId', 1);
+    // Don't assert an exact count: JSONPlaceholder's seed data for a given userId
+    // can change upstream. Assert the filter actually filters, not a specific count.
+    expect(body.length).toBeGreaterThan(0);
+    expect(body.every((post: { userId: number }) => post.userId === 1)).toBe(true);
   });
 
   test('returns an empty array when filtering by a non-existent userId', async ({

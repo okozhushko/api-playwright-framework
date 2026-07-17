@@ -4,6 +4,7 @@ import type { FullResult, Reporter, TestCase, TestResult } from '@playwright/tes
 interface RerunPass {
   test: string;
   retry: number;
+  reason?: string;
 }
 
 export default class FailOnFlakyReporter implements Reporter {
@@ -12,7 +13,12 @@ export default class FailOnFlakyReporter implements Reporter {
   onTestEnd(test: TestCase, result: TestResult): void {
     if (result.status === 'passed' && result.retry > 0) {
       const title = test.titlePath().filter(Boolean).join(' > ');
-      this.rerunPasses.push({ test: title, retry: result.retry });
+      const failedAttempt = test.results[result.retry - 1];
+      this.rerunPasses.push({
+        test: title,
+        retry: result.retry,
+        reason: failedAttempt?.error?.message,
+      });
     }
   }
 
@@ -22,6 +28,11 @@ export default class FailOnFlakyReporter implements Reporter {
     console.error('\nFlaky tests detected (passed on retry):');
     for (const item of this.rerunPasses) {
       console.error(`- ${item.test} (retry=${item.retry})`);
+      if (item.reason) {
+        for (const line of item.reason.split('\n')) {
+          console.error(`  ${line}`);
+        }
+      }
     }
     console.error('Fix the root cause; do not silence with weaker assertions.');
 

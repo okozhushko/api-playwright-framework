@@ -28,6 +28,10 @@ jobs:
       - run: npm run format:check
       - run: npm run lint
       - run: npx tsc --noEmit
+      # This gate runs against the live JSONPlaceholder API by design (see CLAUDE.md CI/CD
+      # section) — the suite's purpose is verifying real integration behavior against that
+      # specific service, not client code in isolation. A transient outage here can block an
+      # unrelated PR; that's an accepted trade-off, not an oversight.
       - run: npm run test:coverage
         env:
           BASE_URL: ${{ vars.BASE_URL }}

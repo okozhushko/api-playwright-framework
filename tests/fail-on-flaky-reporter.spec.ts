@@ -2,9 +2,10 @@ import { test, expect } from '@playwright/test';
 import FailOnFlakyReporter from '@utils/fail-on-flaky-reporter';
 import type { TestCase, TestResult } from '@playwright/test/reporter';
 
-const createFakeTestCase = (titles: string[]): TestCase =>
+const createFakeTestCase = (titles: string[], results: TestResult[] = []): TestCase =>
   ({
     titlePath: () => titles,
+    results,
   }) as TestCase;
 
 const createFakeTestResult = (status: 'passed' | 'failed' | 'skipped', retry = 0): TestResult =>
@@ -56,6 +57,35 @@ test.describe('FailOnFlakyReporter', () => {
     const output = await reporter.onEnd();
 
     expect(output).toEqual({ status: 'failed' });
+  });
+
+  test('surfaces the original failure reason from the failed attempt', async () => {
+    const reporter = new FailOnFlakyReporter();
+    const failedAttempt = createFakeTestResult('failed', 0);
+    (failedAttempt as { error?: { message: string } }).error = {
+      message: 'expect(received).toBe(expected)\nExpected: 200\nReceived: 500',
+    };
+    const testCase = createFakeTestCase(['Suite', 'Flaky Test'], [failedAttempt]);
+    const result = createFakeTestResult('passed', 1);
+
+    let capturedError = '';
+    // eslint-disable-next-line no-console -- Testing error output behavior
+    const originalConsoleError = console.error;
+    // eslint-disable-next-line no-console -- Testing error output behavior
+    console.error = (msg: string) => {
+      capturedError += `${msg}\n`;
+    };
+
+    try {
+      reporter.onTestEnd(testCase, result);
+      await reporter.onEnd();
+
+      expect(capturedError).toContain('Expected: 200');
+      expect(capturedError).toContain('Received: 500');
+    } finally {
+      // eslint-disable-next-line no-console -- Testing error output behavior
+      console.error = originalConsoleError;
+    }
   });
 
   test('records multiple flaky tests', async () => {

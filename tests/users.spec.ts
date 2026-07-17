@@ -65,7 +65,7 @@ test.describe('Users API', () => {
   test('fetches a user by id', { tag: '@smoke' }, async ({ usersClient }) => {
     const response = await usersClient.getById(1);
 
-    expect(response.ok()).toBeTruthy();
+    expect(response.status()).toBe(200);
     const body = await response.json();
     expect(body).toHaveProperty('id', 1);
   });
