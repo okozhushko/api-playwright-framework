@@ -2,14 +2,16 @@ import { test, expect } from '@playwright/test';
 import FailOnFlakyReporter from '@utils/fail-on-flaky-reporter';
 import type { TestCase, TestResult } from '@playwright/test/reporter';
 
-const createFakeTestCase = (titles: string[]): TestCase => ({
-  titlePath: () => titles,
-} as TestCase);
+const createFakeTestCase = (titles: string[]): TestCase =>
+  ({
+    titlePath: () => titles,
+  }) as TestCase;
 
-const createFakeTestResult = (status: 'passed' | 'failed' | 'skipped', retry = 0): TestResult => ({
-  status,
-  retry,
-} as TestResult);
+const createFakeTestResult = (status: 'passed' | 'failed' | 'skipped', retry = 0): TestResult =>
+  ({
+    status,
+    retry,
+  }) as TestResult;
 
 test.describe('FailOnFlakyReporter', () => {
   test('ignores test passes without retry', async () => {
