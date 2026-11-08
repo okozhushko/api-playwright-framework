@@ -109,7 +109,7 @@ tests/
 - Use Playwright's `expect` and its web-first/auto-retrying matchers where applicable; don't add manual sleeps or polling.
 - Don't weaken an assertion to make a flaky test pass (e.g., `toBeTruthy()` where `toMatchObject({...})` is the honest check). Fix the root cause of flakiness instead.
 - Group related tests with `test.describe('<Resource> API')`; keep unrelated resources in separate spec files.
-- Tag the happy-path test per resource (the plain `create` and `getById` cases) with `test('...', { tag: '@smoke' }, ...)`, runnable via `npm run test:smoke`. This is available for when the suite grows large enough that running everything on every PR becomes slow — at 11 tests / ~1s, both `tests.yml` and `nightly.yml` still run the full suite; don't split CI by tag until suite runtime is an actual problem, or the split is just overhead with no benefit.
+- Tag the happy-path test per resource (the plain `create` and `getById` cases) with `test('...', { tag: '@smoke' }, ...)`, runnable via `npm run test:smoke`. This is available for when the suite grows large enough that running everything on every PR becomes slow — at ~40 tests / a few seconds, both `tests.yml` and `nightly.yml` still run the full suite; don't split CI by tag until suite runtime is an actual problem, or the split is just overhead with no benefit.
 - `retries: 2` in CI (`playwright.config.ts`) exists to smooth over genuine external-service hiccups, not to paper over flaky tests. `src/utils/fail-on-flaky-reporter.ts` enforces this: any test that fails then passes on retry fails the overall run, with the offending test(s) printed. If you see this fire, fix the test/client, don't just let the retry "handle it."
 
 ## Error Handling & Logging
