@@ -131,14 +131,15 @@ test.describe('Posts API', () => {
     expect(body).toMatchObject({ ...payload } as Record<string, unknown>);
   });
 
-  test('returns 500 when replacing a non-existent post', async ({ postsClient }) => {
+  test('returns 404 when replacing a non-existent post', async ({ postsClient }) => {
     // Unlike PATCH/DELETE (which return 200 on a missing id, see above),
-    // PUT on a missing id hits an unhandled error in JSONPlaceholder's
-    // underlying server — a genuine bug in the mock, not a design choice.
-    // Pinned here so a future fix upstream is a visible, deliberate change.
+    // PUT on a missing id returns 404 with an empty body. JSONPlaceholder
+    // previously returned 500 here; pinned so any further upstream change
+    // is a visible, deliberate update.
     const payload = createValidPost();
     const response = await postsClient.replace(999999, payload);
 
-    expect(response.status()).toBe(500);
+    expect(response.status()).toBe(404);
+    expect(await response.json()).toEqual({});
   });
 });
