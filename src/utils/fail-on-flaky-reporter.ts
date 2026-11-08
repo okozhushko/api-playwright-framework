@@ -23,8 +23,9 @@ export default class FailOnFlakyReporter implements Reporter {
   }
 
   async onEnd(): Promise<{ status?: FullResult['status'] } | void> {
-    if (this.length === 0) return;
-    rerunPasses.console.error('\nFlaky tests detected (passed on retry):');
+    if (this.rerunPasses.length === 0) return;
+
+    console.error('\nFlaky tests detected (passed on retry):');
     for (const item of this.rerunPasses) {
       console.error(`- ${item.test} (retry=${item.retry})`);
       if (item.reason) {
