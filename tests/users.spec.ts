@@ -154,9 +154,7 @@ test.describe('Users API', () => {
 
   test('returns 404 when replacing a non-existent user', async ({ usersClient }) => {
     // Unlike PATCH/DELETE (which return 200 on a missing id, see above),
-    // PUT on a missing id returns 404 with an empty body. JSONPlaceholder
-    // previously returned 500 here; pinned so any further upstream change
-    // is a visible, deliberate update.
+    // PUT does 404 — another reason not to generalize across verbs.
     const payload = createValidUser();
     const response = await usersClient.replace(999999, payload);
 
