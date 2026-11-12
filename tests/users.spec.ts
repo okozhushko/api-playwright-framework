@@ -152,14 +152,13 @@ test.describe('Users API', () => {
     expect(body).toMatchObject({ ...payload } as Record<string, unknown>);
   });
 
-  test('returns 500 when replacing a non-existent user', async ({ usersClient }) => {
+  test('returns 404 when replacing a non-existent user', async ({ usersClient }) => {
     // Unlike PATCH/DELETE (which return 200 on a missing id, see above),
-    // PUT on a missing id hits an unhandled error in JSONPlaceholder's
-    // underlying server — a genuine bug in the mock, not a design choice.
-    // Pinned here so a future fix upstream is a visible, deliberate change.
+    // PUT does 404 — another reason not to generalize across verbs.
     const payload = createValidUser();
     const response = await usersClient.replace(999999, payload);
 
-    expect(response.status()).toBe(500);
+    expect(response.status()).toBe(404);
+    expect(await response.json()).toEqual({});
   });
 });
